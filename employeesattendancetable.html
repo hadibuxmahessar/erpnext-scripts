@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR</title>
+    <script
+src="https://www.gstatic.com/charts/loader.js">
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+<body>
+    <div style="margin-top: 30px;" class="container">
+        <div class="row">
+            <div style="width: 100%; border-bottom: solid; border-color: rgb(225, 215, 215);">
+              <a href="http://208.209.0.75:8079/app/home"><img style="width: 30px;" src="/assets/erpnext/employeetemplate/img/Osmani.svg" alt=""></a>
+                <br>
+            </div>
+           <br><br>
+            <div class="col-sm-12">
+                <div style="margin-top: 20px;" class="row">
+                    <div class="col-sm"><h5 id="employee_id"></h5></div>
+                    <div class="col-sm"><h5 id="employee_name"></h5></div>
+                    <br>
+                </div>
+                <br>
+                <label for="timeticketdate">Month</label>
+                <select class="form-select" onchange="user_action(this.value)" name="month" id="month">
+                    <option selected>Select Month</option>
+                    <option value="01">jan</option>
+                    <option value="02">feb</option>
+                    <option value="03">march</option>
+                    <option value="04">april</option>
+                    <option value="05">may</option>
+                    <option value="06">jun</option>
+                    <option value="07">july</option>
+                    <option value="08">august</option>
+                    <option value="09">september</option>
+                    <option value="10">october</option>
+                    <option value="11">november</option>
+                    <option value="12">december</option>
+                </select>
+                <!-- <input onchange="user_action()" id="year" min="2022" max="2022" type="number"> -->
+                <table style=" width:100%" id="employeetable" class="table">
+                    <thead>
+                      <tr>
+                        <!-- <th scope="col">Employee Id</th> -->
+                        <th scope="col">Date</th>
+                        <th scope="col">Shift</th>
+                        <th scope="col">CheckIn Time</th>
+                        <th scope="col">CheckOut Time</th>
+                        <th scope="col">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <!-- <th></th> -->
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                <!-- <div style="display: none;"  id="attendancepiechart" style="width:100%; max-width:600px; height:500px;"></div>
+                <div style="display: none;" id="shiftbarchart" style="width:100%; max-width:600px; height:500px;"></div> -->
+            </div>
+        </div>
+    </div>
+ 
+    <script>
+        // function show_table(){
+        //     if(document.getElementById("employeetable").style.display=="none"){
+        //         document.getElementById("graph_button").innerHTML="Show Attendance";
+        //         document.getElementById("employeetable").style.display="block";
+        //     }
+        //     else{
+        //         document.getElementById("table_button").innerHTML="Show Attendance";
+        //         document.getElementById("employeetable").style.display="none";
+        //     }
+            
+        // }
+        // function show_graphs(){
+        //     if(document.getElementById("attendancepiechart").style.display=="none" && document.getElementById("shiftbarchart").style.display=="none"){
+        //         document.getElementById("graph_button").innerHTML="Hide Graphs";
+        //         document.getElementById("attendancepiechart").style.display="block";
+        //         document.getElementById("shiftbarchart").style.display="block";
+        //     }
+        //     else{
+        //         document.getElementById("graph_button").innerHTML="Show Graphs";
+        //         document.getElementById("attendancepiechart").style.display="none";
+        //         document.getElementById("shiftbarchart").style.display="none";
+        //     }
+            
+        // }
+        let data = {};
+        let attendence_data = {};
+        var ins = 0 ;
+        var outs = 0;
+        var day_shift = 0;
+        var night_shift = 0;
+        get_data();
+        function set_employeeId_and_employeeName(data){
+            // SET EMPLOYEE ID
+            document.getElementById("employee_id").innerHTML = data[0]['employee'];
+            // SET EMPLOYEE NAME
+            document.getElementById("employee_name").innerHTML = data[0]['employee_name'];
+        }
+        set_employeeId_and_employeeName(data);
+        function create_attendance_table(month,data){
+            let cleaned_data_1 = [];
+            data.forEach(employee => {
+                // if(employee['timespan'].split(' ')[0].split('-')[1]==month){
+                // CREATE ATTENDANCE TABLE
+                // START
+                employee_date = employee['timespan'].split(' ')[0];
+                // get rows of same date
+                data.forEach(record=>{
+                    record_date = record['timespan'].split(' ')[0];
+                    if(record_date == employee_date){
+                        cleaned_data_1.push(record);
+                    }
+                })
+                // remove compared date from array
+                data.forEach(value=>{
+                    value_date = value['timespan'].split(' ')[0];
+                    if(value_date == employee_date){
+                        data.splice(data.indexOf(value),cleaned_data_1.length);
+                    } 
+                }); 
+                var table = document.getElementById("employeetable");
+                var row = table.insertRow();
+                var cell1 = row.insertCell(0);
+                var cell2 = row.insertCell(1);
+                var cell3 = row.insertCell(2);
+                var cell4 = row.insertCell(3);
+                var cell5 = row.insertCell(4);
+                cell1.innerHTML = cleaned_data_1[0]['timespan'].split(" ")[0];
+                cell2.innerHTML = cleaned_data_1[0]['shift'];
+                //if(cleaned_data_1[0]['log_type'] == 'IN'){
+                attendence_data.forEach(att_data=>{
+                console.log(att_data);
+                if(att_data['attendance_date'] == cleaned_data_1[0]['timespan'].split(' ')[0]){
+                    cell5.innerHTML = att_data['status'];
+                }
+                else if(att_data['status'] != 'Present'){
+                    var row_for_leave = table.insertRow();
+                    row_for_leave.insertCell(0).innerHTML =  att_data['attendance_date'];
+                    row_for_leave.insertCell(1).innerHTML = " ";
+                    row_for_leave.insertCell(2).innerHTML = " ";
+                    row_for_leave.insertCell(3).innerHTML = " ";
+                    row_for_leave.insertCell(4).innerHTML = att_data['status']//"On Leave";
+                    attendence_data.splice(attendence_data.indexOf(att_data) , 1);
+                }
+                
+                });
+                cell3.innerHTML = cleaned_data_1[0]['timespan'].split(" ")[1];
+                //}
+                //if(cleaned_data_1[cleaned_data_1.length-1]['log_type'] == 'OUT'){
+                if(cleaned_data_1.length > 1){
+                    cell4.innerHTML = cleaned_data_1[cleaned_data_1.length-1]['timespan'].split(" ")[1];
+                }
+                cleaned_data_1 = [];
+                }
+            );
+        }
+       
+        function create_data_for_graphs(cleaned_data){
+            cleaned_data.forEach(employee=>{
+                if(employee['log_type'] == 'IN'){
+                    ins+=1;
+                }
+                else if(employee['log_type']=='OUT'){
+                    outs+=1;
+                }
+                if(employee['shift']=='day'){
+                    day_shift += 1;
+                }
+                else if(employee['shift'] == 'night'){
+                    night_shift +=1;
+                }
+            })
+           
+        }
+       
+        function get_data(){
+            $.ajax({
+            'async': false,
+            type: 'GET',
+            url: '/api/resource/Employee Checkin?fields=["employee","employee_name", "log_type", "shift", "timespan"]&limit_start=0&limit_page_length=1000&order_by=timespan%20asc',
+            // &filter=[["Employee Checkin","employee","=","5026"]]
+            success: function (response) {
+                data = response.data;
+            }
+            })
+            return data;
+        }
+
+        function get_attendence_status_data(){
+            $.ajax({
+            'async': false,
+            type: 'GET',
+            url: '/api/resource/Attendance?fields=["attendance_date","status"]&limit_start=0&limit_page_length=1000',
+            // &filter=[["Employee Checkin","employee","=","5026"]]
+            success: function (response) {
+                attendence_data = response.data;
+            }
+            })
+        }
+
+        function clean_data(month,data){
+            let cleaned_data = [];
+            data.forEach(employee => {
+            if(employee['timespan'].split(' ')[0].split('-')[1]==month){
+                cleaned_data.push(employee);
+            }});
+            return cleaned_data;
+        }
+
+        // function clear_graphs(){
+        //     document.getElementById("attendancepiechart").innerHTML="";
+        //     document.getElementById("shiftbarchart").innerHTML = "";
+        // }
+
+        function clear_attendance_table(){
+            var tableHeaderRowCount = 1;
+            var table = document.getElementById('employeetable');
+            var rowCount = table.rows.length;
+            for (var i = tableHeaderRowCount; i < rowCount; i++) {
+                table.deleteRow(tableHeaderRowCount);
+            }
+        }
+
+        function reset_data_for_graphs(){
+            ins = 0;
+            outs = 0;
+            day_shift = 0;
+            night_shift = 0;
+        }
+        
+        function user_action(month){
+            get_data();
+            reset_data_for_graphs();
+            cleaned_data = clean_data(month, data);
+            set_employeeId_and_employeeName(data);
+            get_attendence_status_data();
+            console.log(data);
+            if(cleaned_data.length!=0){
+                create_data_for_graphs(cleaned_data);
+                // clear_graphs();
+                clear_attendance_table();
+                create_attendance_table(month, cleaned_data);
+                create_charts();
+            }
+            else{
+                // clear_graphs();
+                clear_attendance_table();
+                alert("No Data found for selected Month");
+            }
+        }
+        
+        // function create_charts(){
+        //     google.charts.load('current', {'packages':['corechart']});
+        //     google.charts.setOnLoadCallback(drawChart);
+        //     // console.log(ins);
+        //     // console.log(outs);
+        //     function drawChart() {
+        //         var pie_chart_data = google.visualization.arrayToDataTable([
+        //         ['Contry', 'Mhl'],
+        //         ['IN',ins],
+        //         ['OUT',outs],
+        //         ]);
+
+        //         var attendance_options = {
+        //         title:'IN\'s and OUT\'s',
+        //         is3D:true
+        //         };
+
+        //         var chart = new google.visualization.PieChart(document.getElementById('attendancepiechart'));
+        //         chart.draw(pie_chart_data, attendance_options);
+        //     }
+        //     ////////////////////////////////////////////////////////
+        //     google.charts.setOnLoadCallback(drawChartForShift);
+        //     function drawChartForShift() {
+        //         var bar_chart_data = google.visualization.arrayToDataTable([
+        //         ['Contry', 'Barchart'],
+        //         ['Day Shift',day_shift],
+        //         ['Night Shift',night_shift],
+        //         ]);
+
+        //         var shift_options = {
+        //         title:'Shift',
+        //         is3D:true
+        //     };
+
+        //     var chart = new google.visualization.BarChart(document.getElementById('shiftbarchart'));
+        //     chart.draw(bar_chart_data, shift_options);
+        //     }
+        //}
+    </script>
+    <!-- <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script> -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+</html>

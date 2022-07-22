@@ -1,0 +1,20 @@
+var data = []
+frappe.db.get_list('Employee Checkin', {
+    fields: ['employee', 'time', 'date'],
+    filters: {
+        'date': frappe.datetime.get_today()
+        //status: 'Open'
+    }, limit:1000
+}).then(records => {
+    records.forEach(data=>{
+        console.log(data.employee);
+    
+
+cur_frm.cscript.date = function(doc) {
+	if (doc.employee == data.employee) {
+		cur_frm.set_value("log_type", "OUT");
+	  else
+	  cur_frm.set_value("log_type", "IN");
+	}}
+})
+})
